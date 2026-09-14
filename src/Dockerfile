@@ -10,5 +10,5 @@ WORKDIR /app/src
 COPY --chown=appuser:app ./src .
 USER appuser
 EXPOSE 8000
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" || exit 1
+HEALTHCHECK --interval=60s --timeout=5s --start-period=15s --retries=2 CMD python -c "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/healthz'); urllib.request.urlopen('http://127.0.0.1:8000/readyz')" || exit 1
 CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8000"]
