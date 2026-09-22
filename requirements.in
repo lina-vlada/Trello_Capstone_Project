@@ -1,6 +1,6 @@
 fastapi
 gunicorn
 uvicorn
-python-dotenv
 sqlalchemy[asyncio]
 asyncpg
+pydantic-settings

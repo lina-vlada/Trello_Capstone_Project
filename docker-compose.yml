@@ -7,8 +7,10 @@ services:
       - backend-net
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -26,7 +28,11 @@ services:
       - frontend-net
       - backend-net
     environment:
-      - DATABASE_URL=${DATABASE_URL}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
     depends_on:
       db:
         condition: service_healthy
@@ -60,3 +66,7 @@ networks:
 
 volumes:
   postgres_data:
+
+secrets:
+  postgres_password:
+    file: ./src/secrets/postgres_password.txt
