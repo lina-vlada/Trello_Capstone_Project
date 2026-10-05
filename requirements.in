@@ -3,4 +3,5 @@ gunicorn
 uvicorn
 sqlalchemy[asyncio]
 asyncpg
+alembic
 pydantic-settings
