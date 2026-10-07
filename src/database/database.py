@@ -1,4 +1,5 @@
 from fastapi import Depends
+import enum
 from config import settings
 from typing import Annotated 
 from sqlalchemy.orm import DeclarativeBase
@@ -8,6 +9,11 @@ DATABASE_URL = settings.database_url
 
 engine = create_async_engine(DATABASE_URL)
 new_session = async_sessionmaker(engine, expire_on_commit=False)
+
+class RolesEnum(enum.Enum):
+    OWNER = "owner"
+    EDITOR = "editor"
+    VIEWER = "viewer"
 
 class Base(DeclarativeBase):
     pass
