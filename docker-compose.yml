@@ -19,6 +19,28 @@ services:
       start_period: 30s
     volumes:
       - postgres_data:/var/lib/postgresql
+
+  migrate:
+    build: 
+      context: .
+      dockerfile: src/Dockerfile
+    restart: no
+    command: ["alembic", "upgrade", "head"]
+    volumes:
+      - ./src:/app/src
+    networks:
+      - backend-net
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PYTHONPATH: /app:/app/src
+    secrets:
+      - postgres_password
+    depends_on:
+      db:
+        condition: service_healthy
+
   app:
     build:
       context: .
@@ -34,8 +56,8 @@ services:
     secrets:
       - postgres_password
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   nginx:
     image: nginx:alpine@sha256:c8497b180665e631ec92a5091125bec5b214f0e2b99409e30653a125b37557da
