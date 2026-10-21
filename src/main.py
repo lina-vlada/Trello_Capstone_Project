@@ -1,9 +1,12 @@
 from fastapi import FastAPI, status, HTTPException
 from database.database import SessionDep
+from modules import auth
 import asyncio
 from sqlalchemy import text
 
 app = FastAPI()
+app.router(auth)
+
 
 
 @app.get("/healthz",include_in_schema=False)
