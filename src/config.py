@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_db: str
     postgres_host: str = "db"
+    redis_url: str = "redis://redis:6379/0"
     auth_jwt: AuthJWT = AuthJWT()
 
     @property

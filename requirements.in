@@ -7,3 +7,4 @@ alembic
 pydantic-settings
 bcrypt
 pyjwt[crypto]
+redis

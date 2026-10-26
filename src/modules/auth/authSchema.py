@@ -15,6 +15,7 @@ class LoginRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+    access_token: str | None = None
 
 
 class TokenResponse(BaseModel):

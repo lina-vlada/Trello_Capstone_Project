@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status
-from database.database import SessionDep
+from database.database import RedisDep, SessionDep
 from modules.auth.authSchema import LoginRequest,RefreshTokenRequest,RegisterRequest,TokenResponse
 from modules.auth.service import login_user,logout_user,refresh_access_token,register_user
 
@@ -22,5 +22,9 @@ async def refresh(data: RefreshTokenRequest, db: SessionDep):
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(data: RefreshTokenRequest, db: SessionDep) -> None:
-    await logout_user(db, data.refresh_token)
+async def logout(
+    data: RefreshTokenRequest,
+    db: SessionDep,
+    redis: RedisDep,
+) -> None:
+    await logout_user(db, redis, data.refresh_token, data.access_token)

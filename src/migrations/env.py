@@ -13,6 +13,7 @@ import entities.boardUser
 import entities.section
 import entities.ticket
 import entities.ticketUser
+import entities.refreshToken
 import entities.user
 
 from alembic import context
