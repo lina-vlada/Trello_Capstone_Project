@@ -20,6 +20,20 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
 
+  redis:
+    image: redis:7.4-alpine
+    restart: always
+    networks:
+      - backend-net
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
   migrate:
     build: 
       context: .
@@ -53,11 +67,18 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      REDIS_URL: redis://redis:6379/0
+      PRIVATE_KEY_FILE: /run/secrets/private_key
+      PUBLIC_KEY_FILE: /run/secrets/public_key
     secrets:
       - postgres_password
+      - private_key
+      - public_key
     depends_on:
       migrate:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
   nginx:
     image: nginx:alpine@sha256:c8497b180665e631ec92a5091125bec5b214f0e2b99409e30653a125b37557da
@@ -88,7 +109,12 @@ networks:
 
 volumes:
   postgres_data:
+  redis_data:
 
 secrets:
   postgres_password:
     file: ./src/secrets/postgres_password.txt
+  private_key:
+    file: ./certs/private.pem
+  public_key:
+    file: ./certs/public.pem
