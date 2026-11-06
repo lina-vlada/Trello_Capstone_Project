@@ -5,3 +5,7 @@ sqlalchemy[asyncio]
 asyncpg
 alembic
 pydantic-settings
+bcrypt
+pyjwt[crypto]
+redis
+fastapi-redis-sdk
