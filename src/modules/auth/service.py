@@ -3,12 +3,13 @@ from hashlib import sha256
 from uuid import uuid4
 import bcrypt
 from config import settings
-from database.database import RedisDep, SessionDep
-from entities.refreshToken import RefreshToken
+from lib.database.postgres import SessionDep
+from lib.database.redis import RedisDep
+from entities.refresh_token import RefreshToken
 from entities.user import User
 from fastapi import HTTPException, status
 import jwt
-from modules.auth.authSchema import LoginRequest, RegisterRequest, TokenResponse
+from modules.auth.schemas import LoginRequest, RegisterRequest, TokenResponse
 from redis.exceptions import RedisError
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
@@ -116,7 +117,13 @@ async def login_user(db: SessionDep, data: LoginRequest) -> TokenResponse:
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
-    if user is None or not user.is_active or not _verify_password(data.password, user.password_hash):
+    if not _verify_password(data.password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -169,7 +176,7 @@ async def refresh_access_token(db: SessionDep, refresh_token: str) -> TokenRespo
     stored_token = token_result.scalar_one_or_none()
     if stored_token is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or expired refresh token",
         )
 
@@ -177,7 +184,7 @@ async def refresh_access_token(db: SessionDep, refresh_token: str) -> TokenRespo
     user = user_result.scalar_one_or_none()
     if user is None or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found or inactive",
         )
 
@@ -193,12 +200,7 @@ async def refresh_access_token(db: SessionDep, refresh_token: str) -> TokenRespo
     )
 
 
-async def logout_user(
-    db: SessionDep,
-    redis: RedisDep,
-    refresh_token: str,
-    access_token: str | None = None,
-) -> None:
+async def logout_user(db: SessionDep, redis: RedisDep, refresh_token: str, access_token: str | None = None) -> None:
     user_id = _decode_refresh_token(refresh_token)
 
     access_payload = _decode_access_token(access_token) if access_token else None
@@ -212,7 +214,7 @@ async def logout_user(
     if result.rowcount != 1:
         await db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid refresh token",
         )
 

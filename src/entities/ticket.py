@@ -1,10 +1,10 @@
 from sqlalchemy import ForeignKey, String, Boolean
-from database.database import Base
+from lib.database.postgres import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from entities.ticketUser import TicketUser
+    from entities.ticket_user import TicketUser
     from entities.section import Section
 
 class Ticket(Base):

@@ -1,26 +1,17 @@
 from fastapi import FastAPI, status, HTTPException
-from database.database import SessionDep, create_redis_client
-from modules.auth.controller import router as auth_router
+from redis_fastapi import FastAPIRedis
+from lib.database.redis import RedisDep, setup_redis, ping_redis
+from lib.database.postgres import SessionDep
+from modules.auth.router import router as auth_router
+from modules.boards.router import router as boards_router
 import asyncio
 from sqlalchemy import text
 
 app = FastAPI()
+setup_redis(app)
+
 app.include_router(auth_router)
-
-async def startup() -> None:
-    redis_client = create_redis_client()
-    try:
-        await redis_client.ping()
-    except Exception:
-        await redis_client.aclose()
-        raise
-    app.state.redis = redis_client
-
-async def shutdown() -> None:
-    await app.state.redis.aclose()
-
-app.add_event_handler("startup", startup)
-app.add_event_handler("shutdown", shutdown)
+app.include_router(boards_router)
 
 
 @app.get("/healthz",include_in_schema=False)
@@ -28,10 +19,14 @@ async def health_check():
     return {"status":"ok"}
 
 @app.get("/readyz",include_in_schema=False)
-async def ready_check(db: SessionDep):
+async def ready_check(db: SessionDep, redis: RedisDep):
     try:
         await asyncio.wait_for(
             db.execute(text("SELECT 1")),
+            timeout=5.0
+        )
+        await asyncio.wait_for(
+            ping_redis(redis),
             timeout=5.0
         )
     except Exception:

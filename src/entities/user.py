@@ -1,11 +1,11 @@
 from sqlalchemy import String, Boolean
-from database.database import Base
+from lib.database.postgres import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from entities.ticketUser import TicketUser
-    from entities.boardUser import BoardUser
+    from entities.ticket_user import TicketUser
+    from entities.board_user import BoardUser
 
 class User(Base):
     __tablename__ = "users"

@@ -8,3 +8,4 @@ pydantic-settings
 bcrypt
 pyjwt[crypto]
 redis
+fastapi-redis-sdk

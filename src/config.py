@@ -13,6 +13,7 @@ class AuthJWT(BaseModel):
     algorithm: str = "RS256"
     access_token_expire_minute: int = 15
     refresh_token_expire_days: int = 7
+    invite_token_expire_days: int = 1
 
     @property
     def private_key(self) -> str:
@@ -32,7 +33,7 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_db: str
     postgres_host: str = "db"
-    redis_url: str = "redis://redis:6379/0"
+    redis_url: str = "redis://redis:6379/0?decode_responses=True"
     auth_jwt: AuthJWT = AuthJWT()
 
     @property

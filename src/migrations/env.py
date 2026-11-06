@@ -6,14 +6,14 @@ from pathlib import Path
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from src.config import settings
-from database.database import Base
+from config import settings
+from lib.database.postgres import Base
 import entities.board
-import entities.boardUser
+import entities.board_user
 import entities.section
 import entities.ticket
-import entities.ticketUser
-import entities.refreshToken
+import entities.ticket_user
+import entities.refresh_token
 import entities.user
 
 from alembic import context
