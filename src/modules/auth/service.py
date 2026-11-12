@@ -117,13 +117,13 @@ async def login_user(db: SessionDep, data: LoginRequest) -> TokenResponse:
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
-    if not _verify_password(data.password, user.password_hash):
+    if user is None or not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
         )
 
-    if user is None or not user.is_active:
+    if not _verify_password(data.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
