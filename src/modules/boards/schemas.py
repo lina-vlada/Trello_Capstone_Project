@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, field_validator, Field
 from entities.board_user import BoardRole
+from modules.sections.schemas import SectionResponse
 
 
 class BoardBase(BaseModel):
@@ -20,6 +21,9 @@ class BoardResponse(BoardBase):
     is_archived : bool 
 
     model_config = ConfigDict(from_attributes=True)
+
+class BoardDetailResponse(BoardResponse):
+    sections: list[SectionResponse]
 
 class BoardInviteRequest(BaseModel):
     email: str

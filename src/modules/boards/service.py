@@ -3,9 +3,11 @@ from modules.auth.dependencies import UserDep
 from lib.database.postgres import SessionDep
 from modules.boards.schemas import BoardCreate, BoardUpdate, BoardInviteAccept, BoardInviteRequest
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from entities.board_user import BoardUser, BoardRole
 from lib.database.redis import RedisDep
 from entities.board import Board
+from entities.section import Section
 from config import settings
 from datetime import datetime, timedelta, timezone
 from entities.user import User
@@ -13,23 +15,24 @@ from typing import List
 import uuid
 import jwt
 
-async def _require_board_role(db: SessionDep, user_id: int, board_id: int, allowed_roles: set[BoardRole]) -> tuple[BoardUser,Board]:
-    query = await db.execute(select(BoardUser, Board)
-                              .join(Board, Board.id == BoardUser.board_id)
-                              .where(BoardUser.user_id == user_id, BoardUser.board_id == board_id))
-    row = query.first()
+async def _require_board_role(db: SessionDep, user_id: int, board_id: int, allowed_roles: set[BoardRole]) -> BoardUser:
+    query = await db.execute(
+        select(BoardUser).where(
+            BoardUser.user_id == user_id, BoardUser.board_id == board_id
+        )
+    )
+    membership = query.scalar_one_or_none()
     
-    if not row:
+    if membership is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
     
-    membership, board = row
     if membership.role not in allowed_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to perform this action",
         )
 
-    return membership, board
+    return membership
 
     
 async def get_user_boards(user: UserDep, db: SessionDep) -> List[Board]:
@@ -41,8 +44,16 @@ async def get_user_boards(user: UserDep, db: SessionDep) -> List[Board]:
     return result.scalars().all()
 
 async def get_board(user: UserDep, db: SessionDep, board_id: int) -> Board:
-    _, board = await _require_board_role(db, user.id, board_id,{BoardRole.OWNER, BoardRole.EDITOR, BoardRole.VIEWER})
-
+    await _require_board_role(
+        db, user.id, board_id, {BoardRole.OWNER, BoardRole.EDITOR, BoardRole.VIEWER}
+    )
+    board = await db.get(
+        Board,
+        board_id,
+        options=[selectinload(Board.sections).selectinload(Section.tickets)],
+    )
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
     return board
 
 async def create_board(user: UserDep, db: SessionDep, data: BoardCreate) -> Board:
@@ -66,7 +77,10 @@ async def create_board(user: UserDep, db: SessionDep, data: BoardCreate) -> Boar
     return board
 
 async def update_board(user: UserDep, db: SessionDep, data: BoardUpdate, board_id: int) -> Board:
-    _, board = await _require_board_role(db, user.id, board_id,{BoardRole.OWNER, BoardRole.EDITOR})
+    await _require_board_role(db, user.id, board_id,{BoardRole.OWNER, BoardRole.EDITOR})
+    board = await db.get(Board, board_id)
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
     
     updates = data.model_dump(exclude_unset=True)
 
@@ -74,6 +88,12 @@ async def update_board(user: UserDep, db: SessionDep, data: BoardUpdate, board_i
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Provide at least one field to update",
+        )
+
+    if "name" in updates and updates["name"] is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Board name cannot be null",
         )
 
     for field, value in updates.items():
@@ -84,7 +104,10 @@ async def update_board(user: UserDep, db: SessionDep, data: BoardUpdate, board_i
     return board
 
 async def soft_delete_board(user: UserDep, db: SessionDep, board_id: int) -> Board:
-    _, board = await _require_board_role(db, user.id, board_id,{BoardRole.OWNER})
+    await _require_board_role(db, user.id, board_id,{BoardRole.OWNER})
+    board = await db.get(Board, board_id)
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
     board.is_archived = True
     
     await db.commit()
@@ -92,7 +115,10 @@ async def soft_delete_board(user: UserDep, db: SessionDep, board_id: int) -> Boa
     return board
 
 async def hard_delete_board(user: UserDep, db: SessionDep, board_id: int) -> None:
-    _, board = await _require_board_role(db, user.id, board_id,{BoardRole.OWNER})
+    await _require_board_role(db, user.id, board_id,{BoardRole.OWNER})
+    board = await db.get(Board, board_id)
+    if board is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Board not found")
 
     if not board.is_archived:
         raise HTTPException(

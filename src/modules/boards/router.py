@@ -6,6 +6,7 @@ from lib.database.redis import RedisDep
 from modules.auth.dependencies import UserDep
 from modules.boards.schemas import (
     BoardCreate,
+    BoardDetailResponse,
     BoardInviteAccept,
     BoardInviteRequest,
     BoardResponse,
@@ -30,7 +31,7 @@ async def list_user_boards(user: UserDep, db: SessionDep):
     return await get_user_boards(user, db)
 
 
-@router.get("/{board_id}", response_model=BoardResponse)
+@router.get("/{board_id}", response_model=BoardDetailResponse)
 async def get_user_board(board_id: int, user: UserDep, db: SessionDep):
     return await get_board(user, db, board_id)
 
