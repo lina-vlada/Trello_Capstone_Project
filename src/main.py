@@ -4,6 +4,7 @@ from lib.database.redis import RedisDep, setup_redis, ping_redis
 from lib.database.postgres import SessionDep
 from modules.auth.router import router as auth_router
 from modules.boards.router import router as boards_router
+from modules.sections.router import router as sections_router
 import asyncio
 from sqlalchemy import text
 
@@ -12,6 +13,7 @@ setup_redis(app)
 
 app.include_router(auth_router)
 app.include_router(boards_router)
+app.include_router(sections_router)
 
 
 @app.get("/healthz",include_in_schema=False)
