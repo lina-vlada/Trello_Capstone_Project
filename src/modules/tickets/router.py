@@ -6,6 +6,7 @@ from modules.tickets.service import (
     create_ticket,
     get_ticket,
     hard_delete_ticket,
+    list_archived_tickets,
     soft_delete_ticket,
     update_ticket,
 )
@@ -22,13 +23,18 @@ async def get_section_ticket(board_id: int, section_id: int, ticket_id: int, use
     return await get_ticket(user, db, board_id, section_id, ticket_id)
 
 
+@router.get("/archived", response_model=list[TicketResponse])
+async def list_archived_section_tickets(board_id: int, section_id: int, user: UserDep, db: SessionDep):
+    return await list_archived_tickets(user, db, board_id, section_id)
+
+
 @router.post("/", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
 async def create_section_ticket(board_id: int,section_id: int,data: TicketCreate,user: UserDep,db: SessionDep):
     return await create_ticket(user, db, board_id, section_id, data)
 
 
 @router.patch("/{ticket_id}", response_model=TicketResponse)
-async def update_section_ticket(board_id: int,section_id: int,ticket_id: int,data: TicketUpdate,user: UserDep,db: SessionDep):
+async def update_section_ticket(board_id: int, section_id: int, ticket_id: int, data: TicketUpdate, user: UserDep, db: SessionDep):
     return await update_ticket(user, db, board_id, section_id, ticket_id, data)
 
 
