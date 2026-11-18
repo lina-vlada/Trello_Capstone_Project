@@ -1,9 +1,10 @@
 from datetime import timedelta
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Query, status
 from config import settings
 from lib.database.postgres import SessionDep
 from lib.database.redis import RedisDep
 from modules.auth.dependencies import UserDep
+from modules.sections.schemas import TicketResponse
 from modules.boards.schemas import (
     BoardCreate,
     BoardDetailResponse,
@@ -19,6 +20,7 @@ from modules.boards.service import (
     get_user_boards,
     hard_delete_board,
     invite_user_to_board,
+    list_section_tickets,
     soft_delete_board,
     update_board,
 )
@@ -34,6 +36,13 @@ async def list_user_boards(user: UserDep, db: SessionDep):
 @router.get("/{board_id}", response_model=BoardDetailResponse)
 async def get_user_board(board_id: int, user: UserDep, db: SessionDep):
     return await get_board(user, db, board_id)
+
+
+@router.get("/{board_id}/sections/{section_id}/tickets", response_model=list[TicketResponse])
+async def list_board_section_tickets(
+    board_id: int, section_id: int, user: UserDep, db: SessionDep,
+    limit: int = Query(50, ge=1, le=100), offset: int = Query(0, ge=0)):
+    return await list_section_tickets(user, db, board_id, section_id, limit, offset)
 
 
 @router.post("/", response_model=BoardResponse, status_code=status.HTTP_201_CREATED)

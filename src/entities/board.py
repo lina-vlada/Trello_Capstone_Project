@@ -1,4 +1,4 @@
-from sqlalchemy import String, Boolean
+from sqlalchemy import Boolean, String, false
 from lib.database.postgres import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
@@ -13,7 +13,7 @@ class Board(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100),nullable=False)
     description: Mapped[str | None] = mapped_column(String(300))
-    is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
     memberships: Mapped[list["BoardUser"]] = relationship(back_populates="board", cascade="all, delete-orphan", passive_deletes=True)
 
