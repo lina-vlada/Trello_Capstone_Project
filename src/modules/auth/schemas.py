@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 
 
 class RegisterRequest(BaseModel):
@@ -7,10 +7,20 @@ class RegisterRequest(BaseModel):
     email: str
     password: str = Field(min_length=8)
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
+
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
 
 
 class RefreshTokenRequest(BaseModel):

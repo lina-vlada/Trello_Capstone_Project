@@ -19,7 +19,7 @@ class BoardUser(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     user: Mapped["User"] = relationship(back_populates="board_memberships")
 
-    board_id: Mapped[int] = mapped_column(ForeignKey("boards.id", ondelete="CASCADE"),primary_key=True)
+    board_id: Mapped[int] = mapped_column(ForeignKey("boards.id", ondelete="CASCADE"), primary_key=True, index=True)
     board: Mapped["Board"] = relationship(back_populates="memberships")
 
     role: Mapped[BoardRole] = mapped_column(Enum(BoardRole, native_enum=False, length=10), nullable=False)
