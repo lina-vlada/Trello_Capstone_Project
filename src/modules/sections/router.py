@@ -6,12 +6,19 @@ from modules.sections.service import (
 	create_section,
 	get_section,
 	hard_delete_section,
+	list_archived_sections,
 	list_sections,
+	restore_section,
 	soft_delete_section,
 	update_section,
 )
 
 router = APIRouter(prefix="/boards/{board_id}/sections", tags=["Sections management"])
+
+
+@router.get("/archived", response_model=list[SectionResponse])
+async def list_archived_board_sections(board_id: int, user: UserDep, db: SessionDep):
+	return await list_archived_sections(user, db, board_id)
 
 
 @router.get("/", response_model=list[SectionResponse])
@@ -27,6 +34,11 @@ async def get_board_section(board_id: int, section_id: int, user: UserDep, db: S
 @router.post("/", response_model=SectionResponse, status_code=status.HTTP_201_CREATED)
 async def create_board_section(board_id: int, data: SectionCreate, user: UserDep, db: SessionDep):
 	return await create_section(user, db, board_id, data)
+
+
+@router.patch("/{section_id}/restore", response_model=SectionResponse)
+async def restore_board_section(board_id: int, section_id: int, user: UserDep, db: SessionDep):
+	return await restore_section(user, db, board_id, section_id)
 
 
 @router.patch("/{section_id}", response_model=SectionResponse)
