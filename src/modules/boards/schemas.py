@@ -1,7 +1,7 @@
 from typing import Any
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator, Field
 from entities.board_user import BoardRole
-from modules.sections.schemas import SectionSummaryResponse
+from modules.sections.schemas import SectionResponse
 
 
 class BoardBase(BaseModel):
@@ -13,7 +13,7 @@ class BoardCreate(BoardBase):
 
 class BoardUpdate(BoardBase):
     name: str | None = Field(default=None, min_length=1, max_length=100)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=300)
 
     @field_validator("name")
     @classmethod
@@ -35,7 +35,7 @@ class BoardResponse(BoardBase):
     model_config = ConfigDict(from_attributes=True)
 
 class BoardDetailResponse(BoardResponse):
-    sections: list[SectionSummaryResponse]
+    sections: list[SectionResponse]
 
 class BoardInviteRequest(BaseModel):
     email: str

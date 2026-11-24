@@ -6,12 +6,12 @@ from entities.board_user import BoardRole
 from entities.section import Section
 from entities.ticket import Ticket
 from entities.user import User
-from modules.boards.service import require_board_role
+from modules.boards.service import _get_board_for_user
 from modules.sections.schemas import SectionCreate, SectionUpdate
 
 
 async def _require_board_role(db: AsyncSession,user_id: int,board_id: int,allowed_roles: set[BoardRole]):
-    return await require_board_role(db, user_id, board_id, allowed_roles)
+    await _get_board_for_user(db, user_id, board_id, allowed_roles)
 
 
 async def _get_section(db: AsyncSession, board_id: int, section_id: int) -> Section:
@@ -61,7 +61,10 @@ async def create_section(user: User, db: AsyncSession, board_id: int, data: Sect
 	section = Section(name=data.name, description=data.description, board_id=board_id, tickets=[])
 	db.add(section)
 	await db.commit()
-	await db.refresh(section)
+	await db.refresh(
+		section,
+		attribute_names=["id", "name", "description", "board_id", "is_archived"],
+	)
 	return section
 
 

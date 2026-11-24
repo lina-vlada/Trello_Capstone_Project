@@ -53,7 +53,7 @@ async def get_user_boards(user: UserDep, db: SessionDep) -> List[Board]:
 async def get_board(user: UserDep, db: SessionDep, board_id: int) -> Board:
     board, _ = await _get_board_for_user(
         db, user.id, board_id, {BoardRole.OWNER, BoardRole.EDITOR, BoardRole.VIEWER},
-        options=[selectinload(Board.sections)],  
+        options=[selectinload(Board.sections).selectinload(Section.tickets)],
     )
     return board
 

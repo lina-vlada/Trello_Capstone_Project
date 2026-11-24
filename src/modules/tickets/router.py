@@ -18,14 +18,14 @@ router = APIRouter(
 )
 
 
-@router.get("/{ticket_id}", response_model=TicketResponse)
-async def get_section_ticket(board_id: int, section_id: int, ticket_id: int, user: UserDep, db: SessionDep):
-    return await get_ticket(user, db, board_id, section_id, ticket_id)
-
-
 @router.get("/archived", response_model=list[TicketResponse])
 async def list_archived_section_tickets(board_id: int, section_id: int, user: UserDep, db: SessionDep):
     return await list_archived_tickets(user, db, board_id, section_id)
+
+
+@router.get("/{ticket_id}", response_model=TicketResponse)
+async def get_section_ticket(board_id: int, section_id: int, ticket_id: int, user: UserDep, db: SessionDep):
+    return await get_ticket(user, db, board_id, section_id, ticket_id)
 
 
 @router.post("/", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
