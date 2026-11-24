@@ -18,7 +18,7 @@ class TicketUser(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     user: Mapped["User"] = relationship(back_populates="ticket_memberships")
 
-    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True, index=True)
     ticket: Mapped["Ticket"] = relationship(back_populates="memberships")
 
     role: Mapped[TicketRole] = mapped_column(Enum(TicketRole, native_enum=False, length=10), nullable=False)
