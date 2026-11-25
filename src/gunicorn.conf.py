@@ -1,6 +1,8 @@
+import os
+
 worker = 4
 worker_class = "uvicorn.workers.UvicornWorker"
-bind = "0.0.0.0:8000"
+bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 keepalive = 65
 graceful_timeout = 30
 timeout = 120
