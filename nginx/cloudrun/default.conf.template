@@ -1,0 +1,51 @@
+limit_req_zone $binary_remote_addr zone=ip_limit:10m rate=10r/s;
+limit_req_status 429;
+
+server {
+    listen ${PORT};
+    server_name _;
+    server_tokens off;
+
+    # Cloud Run's internal DNS; needed because upstream hosts are resolved at request time
+    resolver 169.254.169.254 valid=30s ipv6=off;
+
+    gzip on;
+    gzip_types application/json;
+    gzip_min_length 1000;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "no-referrer" always;
+
+    client_max_body_size 2m;
+    client_body_timeout 10s;
+
+    location = /healthz {
+        access_log off;
+        default_type application/json;
+        return 200 '{"status":"ok"}';
+    }
+
+    location / {
+        limit_req zone=ip_limit burst=20 nodelay;
+
+        set $backend ${BACKEND_PRIMARY_HOST};
+        proxy_pass https://$backend;
+        include /etc/nginx/proxy_common.conf;
+
+        proxy_set_header Host ${BACKEND_PRIMARY_HOST};
+        proxy_ssl_name ${BACKEND_PRIMARY_HOST};
+
+        proxy_intercept_errors on;
+        error_page 502 503 504 = @secondary;
+    }
+
+    location @secondary {
+        set $backend ${BACKEND_SECONDARY_HOST};
+        proxy_pass https://$backend;
+        include /etc/nginx/proxy_common.conf;
+
+        proxy_set_header Host ${BACKEND_SECONDARY_HOST};
+        proxy_ssl_name ${BACKEND_SECONDARY_HOST};
+    }
+}

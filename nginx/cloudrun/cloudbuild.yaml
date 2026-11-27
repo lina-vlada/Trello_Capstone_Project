@@ -1,0 +1,7 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-f", "nginx/cloudrun/Dockerfile", "-t", "${_IMAGE}", "."]
+images:
+  - ${_IMAGE}
+substitutions:
+  _IMAGE: europe-west1-docker.pkg.dev/gd-gcp-internship-cd/trello-repo/trello-proxy:v1
